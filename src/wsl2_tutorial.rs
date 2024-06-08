@@ -73,11 +73,7 @@ pub fn wsl2_tutorial() -> Html {
                     <h2>{ "Docker" }</h2>
                     <div class="normalText">
                         <p>{ "Docker is a container manager that you be the base for lots of apps. " }<a target="_blank" href="https://docs.docker.com/engine/install/ubuntu/">{ "You can check it our here." }</a></p>
-                        <p>{ "To install Docker, you can use Brew:" }</p>
-                        <div>
-                            <p class="code">{ "brew install docker" }</p>
-                        </div>
-                        <p>{ "If anything goes wrong, you'll need to install it manually using APT:" }</p>
+                        <p>{ "To install Docker, run:" }</p>
                         <div>
                             <p class="code">{ "sudo apt-get update" }</p>
                             <p class="code">{ "sudo apt-get install ca-certificates curl" }</p>
