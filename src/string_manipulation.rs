@@ -3,7 +3,7 @@ use flate2::Compression;
 use flate2::write::DeflateEncoder;
 use std::io::{Read, Write};
 use base64::prelude::*;
-use rsa::Pkcs1v15Encrypt;
+use rsa::{pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey}, pkcs8::{DecodePrivateKey, DecodePublicKey}, Pkcs1v15Encrypt};
 use hmac::{Hmac, Mac};
 use xxhash_rust::xxh3::xxh3_128;
 use std::error;
@@ -243,63 +243,39 @@ pub fn beautify_xml(xml_string: &str) -> Result<String, Box<dyn error::Error>> {
 }
 
 pub fn beautify_sql(sql_string: &str) -> Result<String, Box<dyn error::Error>> {
-    let mut beautified_sql = String::new();
-    let mut indentation_level = 0;
-    let mut is_inside_quotes = false;
-
-    for c in sql_string.chars() {
-        match c {
-            '"' => {
-                beautified_sql.push(c);
-                is_inside_quotes = !is_inside_quotes;
-            }
-            ';' => {
-                beautified_sql.push(c);
-                beautified_sql.push('\n');
-                beautified_sql.push_str(&"    ".repeat(indentation_level));
-            }
-            '(' => {
-                beautified_sql.push(c);
-                if !is_inside_quotes {
-                    indentation_level += 1;
-                    beautified_sql.push('\n');
-                    beautified_sql.push_str(&"    ".repeat(indentation_level));
-                }
-            }
-            ')' => {
-                if !is_inside_quotes {
-                    indentation_level -= 1;
-                    beautified_sql.push('\n');
-                    beautified_sql.push_str(&"    ".repeat(indentation_level));
-                }
-                beautified_sql.push(c);
-            }
-            ',' => {
-                beautified_sql.push(c);
-                if !is_inside_quotes {
-                    beautified_sql.push('\n');
-                    beautified_sql.push_str(&"    ".repeat(indentation_level));
-                }
-            }
-            _ => {
-                beautified_sql.push(c);
-            }
-        }
-    }
+    let beautified_sql = sqlformat::format(sql_string, &sqlformat::QueryParams::None,  sqlformat::FormatOptions { indent: sqlformat::Indent::Spaces(4), uppercase: true, lines_between_queries: 1 });
 
     Ok(beautified_sql)
 }
 
-pub fn encrypt_rsa(public_key: &rsa::RsaPublicKey, plaintext: &str) -> Result<String, Box<dyn error::Error>> {
+pub fn encrypt_rsa_pkcs1(public_key: &str, plaintext: &str) -> Result<String, Box<dyn error::Error>> {
     let mut rng = rand::thread_rng();
-    let ciphertext = public_key.encrypt(&mut rng, Pkcs1v15Encrypt, plaintext.as_bytes())?;
+    let rsa_key = rsa::RsaPublicKey::from_pkcs1_pem(public_key)?;
+    let ciphertext = rsa_key.encrypt(&mut rng, Pkcs1v15Encrypt, plaintext.as_bytes())?;
     let base64_ciphertext = BASE64_STANDARD.encode(ciphertext);
     Ok(base64_ciphertext)
 }
 
-pub fn decrypt_rsa(private_key: &rsa::RsaPrivateKey, ciphertext: &str) -> Result<String, Box<dyn error::Error>> {
+pub fn decrypt_rsa_pkcs1(private_key: &str, ciphertext: &str) -> Result<String, Box<dyn error::Error>> {
     let ciphertext_bytes = BASE64_STANDARD.decode(ciphertext)?;
-    let plaintext = private_key.decrypt(Pkcs1v15Encrypt, &ciphertext_bytes)?;
+    let rsa_key = rsa::RsaPrivateKey::from_pkcs1_pem(private_key)?;
+    let plaintext = rsa_key.decrypt(Pkcs1v15Encrypt, &ciphertext_bytes)?;
+    let plaintext_string = String::from_utf8_lossy(&plaintext).to_string();
+    Ok(plaintext_string)
+}
+
+pub fn encrypt_rsa_pkcs8(public_key: &str, plaintext: &str) -> Result<String, Box<dyn error::Error>> {
+    let mut rng = rand::thread_rng();
+    let rsa_key = rsa::RsaPublicKey::from_public_key_pem(public_key)?;
+    let ciphertext = rsa_key.encrypt(&mut rng, Pkcs1v15Encrypt, plaintext.as_bytes())?;
+    let base64_ciphertext = BASE64_STANDARD.encode(ciphertext);
+    Ok(base64_ciphertext)
+}
+
+pub fn decrypt_rsa_pkcs8(private_key: &str, ciphertext: &str) -> Result<String, Box<dyn error::Error>> {
+    let ciphertext_bytes = BASE64_STANDARD.decode(ciphertext)?;
+    let rsa_key = rsa::RsaPrivateKey::from_pkcs8_pem(private_key)?;
+    let plaintext = rsa_key.decrypt(Pkcs1v15Encrypt, &ciphertext_bytes)?;
     let plaintext_string = String::from_utf8_lossy(&plaintext).to_string();
     Ok(plaintext_string)
 }

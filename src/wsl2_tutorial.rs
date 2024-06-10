@@ -451,23 +451,6 @@ pub fn wsl2_tutorial() -> Html {
                         </div>
                     </div>
                 </div>
-                <div>
-                    <p>{ "To run back end, execute in terminal the following command from inside /back-end:" }</p>
-                    <p>{ "cargo run" }</p>
-                    <p>{ "If you want live reloading, run:" }</p>
-                    <p>{ "cargo watch -c -q -x run" }</p>
-                    <p>{ "backend runs on localhost:3000" }</p>
-                    <p>{ "To run front end, execute in terminal the following command to enable live reloading from inside /front-end:" }</p>
-                    <p>{ "Install WASM target" }</p>
-                    <p>{ "rustup target add wasm32-unknown-unknown" }</p>
-                    <p>{ "Install trunk" }</p>
-                    <p>{ "cargo install --locked trunk" }</p>
-                    <p>{ "Serve the app" }</p>
-                    <p>{ "trunk serve" }</p>
-                    <p>{ "Serve the app and open the browser" }</p>
-                    <p>{ "trunk serve --open" }</p>
-                    <p>{ "frontend runs on localhost:8080 by default or whats configured on Trunk.toml" }</p>
-                </div>
             </div>
         </main>
     }

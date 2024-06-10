@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::error::{self, Error};
 
 use web_sys::HtmlTextAreaElement;
 use yew::prelude::*;
@@ -75,7 +75,7 @@ struct CreateUser {
     };
 }*/
 
-fn set_output_text(input_string: &str, transform_function: fn (&str) -> Result<String, Box<dyn Error>>, element: NodeRef) {
+fn set_output_text_with_transform(input_string: &str, transform_function: fn (&str) -> Result<String, Box<dyn Error>>, element: NodeRef) {
     let text_output_ref = element.clone();
     let text_output_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
     if input_string.is_empty() {
@@ -93,10 +93,30 @@ fn set_output_text(input_string: &str, transform_function: fn (&str) -> Result<S
     }
 }
 
+fn set_output_text(input_result: &Result<String, Box<dyn error::Error>>, element: NodeRef) {
+    let text_output_ref = element.clone();
+    let text_output_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
+    match input_result {
+        Ok(input_string) => {
+            if input_string.is_empty() {
+                text_output_element.set_value("Type something into the input");
+                return;
+            }
+            text_output_element.set_value(input_string);
+        },
+        Err(e) => {
+            text_output_element.set_value(&e.to_string());
+        }
+    }
+}
+
 #[function_component(StringManipulator)]
 pub fn string_manipulator() -> Html {
     let text_input_ref = use_node_ref();
     let text_output_ref = use_node_ref();
+    let hmac_key_ref = use_node_ref();
+    let public_key_ref = use_node_ref();
+    let private_key_ref = use_node_ref();
 
     let onclick_to_json = {
         let text_input_ref = text_input_ref.clone();
@@ -105,7 +125,7 @@ pub fn string_manipulator() -> Html {
             let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
             //let text_output_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
             let input_string = text_input_element.value();
-            set_output_text(&input_string, beautify_json, text_output_ref.clone())
+            set_output_text_with_transform(&input_string, beautify_json, text_output_ref.clone())
         })
     };
 
@@ -114,9 +134,8 @@ pub fn string_manipulator() -> Html {
         let text_output_ref = text_output_ref.clone();
         Callback::from(move |_: MouseEvent| {
             let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
-            //let text_output_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
             let input_string = text_input_element.value();
-            set_output_text(&input_string, beautify_xml, text_output_ref.clone())
+            set_output_text_with_transform(&input_string, beautify_xml, text_output_ref.clone())
         })
     };
 
@@ -125,9 +144,8 @@ pub fn string_manipulator() -> Html {
         let text_output_ref = text_output_ref.clone();
         Callback::from(move |_: MouseEvent| {
             let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
-            //let text_output_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
             let input_string = text_input_element.value();
-            set_output_text(&input_string, beautify_sql, text_output_ref.clone())
+            set_output_text_with_transform(&input_string, beautify_sql, text_output_ref.clone())
         })
     };
 
@@ -136,9 +154,8 @@ pub fn string_manipulator() -> Html {
         let text_output_ref = text_output_ref.clone();
         Callback::from(move |_: MouseEvent| {
             let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
-            //let text_output_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
             let input_string = text_input_element.value();
-            set_output_text(&input_string, decompress_and_decode_string, text_output_ref.clone())
+            set_output_text_with_transform(&input_string, decompress_and_decode_string, text_output_ref.clone())
         })
     };
 
@@ -147,9 +164,8 @@ pub fn string_manipulator() -> Html {
         let text_output_ref = text_output_ref.clone();
         Callback::from(move |_: MouseEvent| {
             let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
-            //let text_output_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
             let input_string = text_input_element.value();
-            set_output_text(&input_string, compress_string, text_output_ref.clone())
+            set_output_text_with_transform(&input_string, compress_string, text_output_ref.clone())
         })
     };
 
@@ -158,9 +174,8 @@ pub fn string_manipulator() -> Html {
         let text_output_ref = text_output_ref.clone();
         Callback::from(move |_: MouseEvent| {
             let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
-            //let text_output_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
             let input_string = text_input_element.value();
-            set_output_text(&input_string, hash_string_xxhash, text_output_ref.clone())
+            set_output_text_with_transform(&input_string, hash_string_xxhash, text_output_ref.clone())
         })
     };
 
@@ -169,28 +184,116 @@ pub fn string_manipulator() -> Html {
         let text_output_ref = text_output_ref.clone();
         Callback::from(move |_: MouseEvent| {
             let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
-            //let text_output_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
             let input_string = text_input_element.value();
-            set_output_text(&input_string, hash_string, text_output_ref.clone())
+            set_output_text_with_transform(&input_string, hash_string, text_output_ref.clone())
+        })
+    };
+
+    let onclick_sign_hmac = {
+        let text_input_ref = text_input_ref.clone();
+        let text_output_ref = text_output_ref.clone();
+        let hmac_key_ref = hmac_key_ref.clone();
+        Callback::from(move |_: MouseEvent| {
+            let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let signing_key_element: HtmlTextAreaElement = hmac_key_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let input_string = text_input_element.value();
+            let signing_key = signing_key_element.value();
+            let result = sign_hmac(signing_key.as_bytes(), &input_string);
+            set_output_text(&result, text_output_ref.clone())
+        })
+    };
+
+    let onclick_encrypt_pkcs1 = {
+        let text_input_ref = text_input_ref.clone();
+        let text_output_ref = text_output_ref.clone();
+        let public_key_ref = public_key_ref.clone();
+        Callback::from(move |_: MouseEvent| {
+            let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let public_key_element = public_key_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let input_string = text_input_element.value();
+            let public_key = public_key_element.value();
+            let result = encrypt_rsa_pkcs1(&public_key, &input_string);
+            set_output_text(&result, text_output_ref.clone())
+        })
+    };
+
+    let onclick_decrypt_pkcs1 = {
+        let text_input_ref = text_input_ref.clone();
+        let text_output_ref = text_output_ref.clone();
+        let private_key_ref = private_key_ref.clone();
+        Callback::from(move |_: MouseEvent| {
+            let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let private_key_element = private_key_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let input_string = text_input_element.value();
+            let private_key = private_key_element.value();
+            let result = decrypt_rsa_pkcs1(&private_key, &input_string);
+            set_output_text(&result, text_output_ref.clone())
+        })
+    };
+
+    let onclick_encrypt_pkcs8 = {
+        let text_input_ref = text_input_ref.clone();
+        let text_output_ref = text_output_ref.clone();
+        let public_key_ref = public_key_ref.clone();
+        Callback::from(move |_: MouseEvent| {
+            let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let public_key_element = public_key_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let input_string = text_input_element.value();
+            let public_key = public_key_element.value();
+            let result = encrypt_rsa_pkcs8(&public_key, &input_string);
+            set_output_text(&result, text_output_ref.clone())
+        })
+    };
+
+    let onclick_decrypt_pkcs8 = {
+        let text_input_ref = text_input_ref.clone();
+        let text_output_ref = text_output_ref.clone();
+        let private_key_ref = private_key_ref.clone();
+        Callback::from(move |_: MouseEvent| {
+            let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let private_key_element = private_key_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let input_string = text_input_element.value();
+            let private_key = private_key_element.value();
+            let result = decrypt_rsa_pkcs8(&private_key, &input_string);
+            set_output_text(&result, text_output_ref.clone())
         })
     };
 
     html! {
         <main>
             <div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <textarea ref={ text_input_ref } style="flex: 1; margin-right: 10px;" rows="10"></textarea>
-                <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                    <button style="margin-bottom: 10px;" onclick={ onclick_to_json }>{ "To beauty JSON" }</button>
-                    <button style="margin-bottom: 10px;" onclick={ onclick_to_xml }>{ "To beauty XML" }</button>
-                    <button style="margin-bottom: 10px;" onclick={ onclick_to_sql }>{ "To beauty SQL" }</button>
-                    <button style="margin-bottom: 10px;" onclick={ onclick_to_decompress }>{ "Decompress" }</button>
-                    <button style="margin-bottom: 10px;" onclick={ onclick_to_compress }>{ "Compress" }</button>
-                    <button style="margin-bottom: 10px;" onclick={ onclick_to_xxhash }>{ "Hash XXHash128" }</button>
-                    <button style="margin-bottom: 10px;" onclick={ onclick_to_sha256hash }>{ "Hash SAH256" }</button>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <textarea ref={ text_input_ref } style="flex: 1; margin-right: 10px;" rows="10"></textarea>
+                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                        <button style="margin-bottom: 10px;" onclick={ onclick_to_json }>{ "To beauty JSON" }</button>
+                        <button style="margin-bottom: 10px;" onclick={ onclick_to_xml }>{ "To beauty XML" }</button>
+                        <button style="margin-bottom: 10px;" onclick={ onclick_to_sql }>{ "To beauty SQL" }</button>
+                        <button style="margin-bottom: 10px;" onclick={ onclick_to_decompress }>{ "Decompress" }</button>
+                        <button style="margin-bottom: 10px;" onclick={ onclick_to_compress }>{ "Compress" }</button>
+                        <button style="margin-bottom: 10px;" onclick={ onclick_to_xxhash }>{ "Hash XXHash128" }</button>
+                        <button style="margin-bottom: 10px;" onclick={ onclick_to_sha256hash }>{ "Hash SAH256" }</button>
+                        <button style="margin-bottom: 10px;" onclick={ onclick_encrypt_pkcs1 }>{ "Encrypt RSA PKCS#1" }</button>
+                        <button style="margin-bottom: 10px;" onclick={ onclick_decrypt_pkcs1 }>{ "Decrypt RSA PKCS#1" }</button>
+                        <button style="margin-bottom: 10px;" onclick={ onclick_encrypt_pkcs8 }>{ "Encrypt PKCS#8" }</button>
+                        <button style="margin-bottom: 10px;" onclick={ onclick_decrypt_pkcs8 }>{ "Decrypt PKCS#8" }</button>
+                        <button style="margin-bottom: 10px;" onclick={ onclick_sign_hmac }>{ "Sign HMAC" }</button>
+                    </div>
+                    <textarea ref={ text_output_ref } style="flex: 1; margin-left: 10px;" rows="10" readonly=true></textarea>
                 </div>
-                <textarea ref={ text_output_ref } style="flex: 1; margin-left: 10px;" rows="10" readonly=true></textarea>
-            </div>
+                <div style="display: flex; flex-direction: column; max-width: 100%;">
+                    <div>
+                        <label for="hmac-key">{ "HMAC Key: "}</label>
+                        <textarea ref={ hmac_key_ref } id="hmac-key" style="width: 100%;" rows="1"></textarea>
+                    </div>
+                    <div>
+                        <label for="public-key">{ "Public Key (PEM RSA PKCS#1 or PKCS#8 format): "}</label>
+                        <textarea ref={ public_key_ref } id="public-key" style="width: 100%;" rows="5"></textarea>
+                    </div>
+                    <div>
+                        <label for="private-key">{ "Private Key (PEM RSA PKCS#1 or PKCS#8 format): "}</label>
+                        <textarea ref={ private_key_ref } id="private-key" style="width: 100%;" rows="5"></textarea>
+                    </div>
+                </div>
             </div>
         </main>
     }

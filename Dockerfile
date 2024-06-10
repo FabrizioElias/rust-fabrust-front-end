@@ -33,9 +33,15 @@ COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
 
 
 # Set the command to run your application
-EXPOSE 8080
+EXPOSE 8000
+EXPOSE 80
 
 # Theres no need for a CMD or RUN because the NGINX image already has a CMD to start the server
 
 #docker build -t fabdev-frontend .
+#docker build -t fabdevrust.azurecr.io/fabdevrust/frontend .
 #docker run -p 8000:8000 --name fabdev-front fabdev-frontend
+#az login --use-device-code
+#az acr login --name fabdevrust
+#docker tag fabdev-frontend fabdevrust.azurecr.io/fabdevrust/frontend
+#docker push fabdevrust.azurecr.io/fabdevrust/frontend
