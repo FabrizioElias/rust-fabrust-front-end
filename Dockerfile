@@ -1,5 +1,5 @@
 # Use the official Rust image as a parent image
-FROM rust:latest as builder
+FROM rust:latest AS builder
 
 RUN apt install git
 
@@ -22,7 +22,7 @@ RUN rustup target add wasm32-unknown-unknown
 # Build the project
 RUN trunk build --release
 
-FROM nginx:latest as server
+FROM nginx:latest AS server
 COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
 
 # Use Debian as a base image for the final stage
