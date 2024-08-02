@@ -30,3 +30,4 @@ web-sys = { version =  "0.3.69", features = ["HtmlTextAreaElement", "HtmlElement
 yew-router = "0.18.0"
 gloo-console = "0.3.0"
 sqlformat = "0.2.3"
+lazy-regex = "3.2.0"

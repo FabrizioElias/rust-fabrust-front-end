@@ -129,11 +129,30 @@ pub fn string_manipulator() -> Html {
         })
     };
 
+    let onclick_beautify_json = {
+        let text_output_ref = text_output_ref.clone();
+        Callback::from(move |_: MouseEvent| {
+            let text_input_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
+            //let text_output_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let input_string = text_input_element.value();
+            set_output_text_with_transform(&input_string, beautify_json, text_output_ref.clone())
+        })
+    };
+
     let onclick_to_xml = {
         let text_input_ref = text_input_ref.clone();
         let text_output_ref = text_output_ref.clone();
         Callback::from(move |_: MouseEvent| {
             let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let input_string = text_input_element.value();
+            set_output_text_with_transform(&input_string, beautify_xml, text_output_ref.clone())
+        })
+    };
+
+    let onclick_beautify_xml = {
+        let text_output_ref = text_output_ref.clone();
+        Callback::from(move |_: MouseEvent| {
+            let text_input_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
             let input_string = text_input_element.value();
             set_output_text_with_transform(&input_string, beautify_xml, text_output_ref.clone())
         })
@@ -149,6 +168,24 @@ pub fn string_manipulator() -> Html {
         })
     };
 
+    let onclick_beautify_sql = {
+        let text_output_ref = text_output_ref.clone();
+        Callback::from(move |_: MouseEvent| {
+            let text_input_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let input_string = text_input_element.value();
+            set_output_text_with_transform(&input_string, beautify_xml, text_output_ref.clone())
+        })
+    };
+
+    let onclick_decode_unicode = {
+        let text_output_ref = text_output_ref.clone();
+        Callback::from(move |_: MouseEvent| {
+            let text_input_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let input_string = text_input_element.value();
+            set_output_text_with_transform(&input_string, decode_unicode_str, text_output_ref.clone())
+        })
+    };
+
     let onclick_to_decompress = {
         let text_input_ref = text_input_ref.clone();
         let text_output_ref = text_output_ref.clone();
@@ -159,6 +196,16 @@ pub fn string_manipulator() -> Html {
         })
     };
 
+    let onclick_to_decompress_hex = {
+        let text_input_ref = text_input_ref.clone();
+        let text_output_ref = text_output_ref.clone();
+        Callback::from(move |_: MouseEvent| {
+            let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let input_string = text_input_element.value();
+            set_output_text_with_transform(&input_string, decompress_and_decode_hex_string, text_output_ref.clone())
+        })
+    };
+
     let onclick_to_compress = {
         let text_input_ref = text_input_ref.clone();
         let text_output_ref = text_output_ref.clone();
@@ -166,6 +213,16 @@ pub fn string_manipulator() -> Html {
             let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
             let input_string = text_input_element.value();
             set_output_text_with_transform(&input_string, compress_string, text_output_ref.clone())
+        })
+    };
+
+    let onclick_to_compress_hex = {
+        let text_input_ref = text_input_ref.clone();
+        let text_output_ref = text_output_ref.clone();
+        Callback::from(move |_: MouseEvent| {
+            let text_input_element = text_input_ref.cast::<HtmlTextAreaElement>().unwrap();
+            let input_string = text_input_element.value();
+            set_output_text_with_transform(&input_string, compress_string_hex, text_output_ref.clone())
         })
     };
 
@@ -262,23 +319,35 @@ pub fn string_manipulator() -> Html {
     html! {
         <main>
             <div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <textarea ref={ text_input_ref } style="flex: 1; margin-right: 10px;" rows="10"></textarea>
-                    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                        <button style="margin-bottom: 10px;" onclick={ onclick_to_json }>{ "To beauty JSON" }</button>
-                        <button style="margin-bottom: 10px;" onclick={ onclick_to_xml }>{ "To beauty XML" }</button>
-                        <button style="margin-bottom: 10px;" onclick={ onclick_to_sql }>{ "To beauty SQL" }</button>
-                        <button style="margin-bottom: 10px;" onclick={ onclick_to_decompress }>{ "Decompress" }</button>
-                        <button style="margin-bottom: 10px;" onclick={ onclick_to_compress }>{ "Compress" }</button>
-                        <button style="margin-bottom: 10px;" onclick={ onclick_to_xxhash }>{ "Hash XXHash128" }</button>
-                        <button style="margin-bottom: 10px;" onclick={ onclick_to_sha256hash }>{ "Hash SAH256" }</button>
-                        <button style="margin-bottom: 10px;" onclick={ onclick_encrypt_pkcs1 }>{ "Encrypt RSA PKCS#1" }</button>
-                        <button style="margin-bottom: 10px;" onclick={ onclick_decrypt_pkcs1 }>{ "Decrypt RSA PKCS#1" }</button>
-                        <button style="margin-bottom: 10px;" onclick={ onclick_encrypt_pkcs8 }>{ "Encrypt PKCS#8" }</button>
-                        <button style="margin-bottom: 10px;" onclick={ onclick_decrypt_pkcs8 }>{ "Decrypt PKCS#8" }</button>
-                        <button style="margin-bottom: 10px;" onclick={ onclick_sign_hmac }>{ "Sign HMAC" }</button>
+                <div style="display: flex; justify-content: center; align-items: center;">
+                    <div style="width: 50%; display: grid; align-self: flex-start;">
+                        <textarea ref={ text_input_ref } style="flex: 1; margin-right: 10px;" rows="30"></textarea>
+                        <div>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_to_json }>{ "To beauty JSON" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_to_xml }>{ "To beauty XML" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_to_sql }>{ "To beauty SQL" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_to_decompress }>{ "Decompress" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_to_decompress_hex }>{ "Decompress from hex (0x)" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_to_compress }>{ "Compress" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_to_compress_hex }>{ "Compress to hex (0x)" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_to_xxhash }>{ "Hash XXHash128" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_to_sha256hash }>{ "Hash SHA256" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_encrypt_pkcs1 }>{ "Encrypt RSA PKCS#1" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_decrypt_pkcs1 }>{ "Decrypt RSA PKCS#1" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_encrypt_pkcs8 }>{ "Encrypt PKCS#8" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_decrypt_pkcs8 }>{ "Decrypt PKCS#8" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_sign_hmac }>{ "Sign HMAC" }</button>
+                        </div>
                     </div>
-                    <textarea ref={ text_output_ref } style="flex: 1; margin-left: 10px;" rows="10" readonly=true></textarea>
+                    <div style="width: 50%; display: grid; align-self: flex-start;">
+                        <textarea ref={ text_output_ref } style="flex: 1; margin-left: 10px;" rows="30" readonly=true></textarea>
+                        <div style="margin-left: 10px;">
+                            <button style="margin-bottom: 10px;" onclick={ onclick_beautify_json }>{ "Beautify JSON" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_beautify_xml }>{ "Beautify XML" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_beautify_sql }>{ "Beautify SQL" }</button>
+                            <button style="margin-bottom: 10px;" onclick={ onclick_decode_unicode }>{ "Decode Unicode (\\u...)" }</button>
+                        </div>
+                    </div>
                 </div>
                 <div style="display: flex; flex-direction: column; max-width: 100%;">
                     <div>

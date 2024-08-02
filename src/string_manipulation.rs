@@ -7,6 +7,7 @@ use rsa::{pkcs1::{DecodeRsaPrivateKey, DecodeRsaPublicKey}, pkcs8::{DecodePrivat
 use hmac::{Hmac, Mac};
 use xxhash_rust::xxh3::xxh3_128;
 use std::error;
+use lazy_regex::*;
 
 pub fn hash_object<T: serde::Serialize + std::hash::Hasher>(object: &T) -> Result<String, Box<dyn error::Error>> {
     let bytes = bincode::serialize(object).expect("Error serializing object");
@@ -90,6 +91,14 @@ pub fn compress_string(object: &str) -> Result<String, Box<dyn error::Error>> {
     Ok(BASE64_STANDARD.encode(compressed_data))
 }
 
+pub fn compress_string_hex(string: &str) -> Result<String, Box<dyn error::Error>> {
+    let mut encoder = DeflateEncoder::new(Vec::new(), Compression::default());
+    let bytes = bincode::serialize(string)?;
+    encoder.write_all(&bytes)?;
+    let compressed_data = encoder.finish().unwrap();
+    Ok(hex::encode(compressed_data))
+}
+
 pub fn compress_object_max<T: serde::Serialize>(object: &T) -> Result<String, Box<dyn error::Error>> {
     let mut encoder = DeflateEncoder::new(Vec::new(), Compression::new(10));
     let bytes = bincode::serialize(object)?;
@@ -115,6 +124,44 @@ pub fn decompress_object_hex<T: for<'a> serde::Deserialize<'a>>(hex_string: &str
     let object: T = bincode::deserialize(&decompressed_data)?;
 
     Ok(object)
+}
+
+pub fn decompress_and_decode_hex_string(hex_string: &str) -> Result<String, Box<dyn error::Error>> {
+    if hex_string.starts_with("0x") {
+        let compressed_data = hex::decode(&hex_string[2..])?;
+        let mut decoder = flate2::read::DeflateDecoder::new(&compressed_data[..]);
+        let mut decompressed_data = Vec::new();
+        decoder.read_to_end(&mut decompressed_data)?;
+
+        decode_unicode(String::from_utf8(decompressed_data)?)
+    } else {
+        let compressed_data = hex::decode(hex_string)?;
+        let mut decoder = flate2::read::DeflateDecoder::new(&compressed_data[..]);
+        let mut decompressed_data = Vec::new();
+        decoder.read_to_end(&mut decompressed_data)?;
+
+        decode_unicode(String::from_utf8(decompressed_data)?)
+    }
+}
+
+pub fn decode_unicode_str(string: &str) -> Result<String, Box<dyn error::Error>> {
+    let decoded = regex_replace_all!(r#"\\u(.{4})"#, string, |_, num: &str| {
+        let num: u32 = u32::from_str_radix(num, 16).unwrap();
+        let c: char = std::char::from_u32(num).unwrap();
+        c.to_string()
+    });
+
+    Ok(decoded.to_string())
+}
+
+pub fn decode_unicode(string: String) -> Result<String, Box<dyn error::Error>> {
+    let decoded = regex_replace_all!(r#"\\u(.{4})"#, string.as_str(), |_, num: &str| {
+        let num: u32 = u32::from_str_radix(num, 16).unwrap();
+        let c: char = std::char::from_u32(num).unwrap();
+        c.to_string()
+    });
+
+    Ok(decoded.to_string())
 }
 
 pub fn decompress_and_decode_object<T:for<'a> serde::Deserialize<'a>>(base64_string: &str) -> Result<T, Box<dyn error::Error>> {
