@@ -173,7 +173,7 @@ pub fn string_manipulator() -> Html {
         Callback::from(move |_: MouseEvent| {
             let text_input_element = text_output_ref.cast::<HtmlTextAreaElement>().unwrap();
             let input_string = text_input_element.value();
-            set_output_text_with_transform(&input_string, beautify_xml, text_output_ref.clone())
+            set_output_text_with_transform(&input_string, beautify_sql, text_output_ref.clone())
         })
     };
 
